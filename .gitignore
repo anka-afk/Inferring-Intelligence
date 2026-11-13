@@ -1,0 +1,17 @@
+# Local editor / system files
+.DS_Store
+Thumbs.db
+desktop.ini
+.obsidian/
+.idea/
+.vscode/
+
+# Local exports and raw recordings
+exports/
+recordings/
+*.mp4
+*.mov
+*.mkv
+*.wav
+*.tmp
+~$*

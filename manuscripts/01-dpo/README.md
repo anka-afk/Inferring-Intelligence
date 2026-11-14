@@ -519,10 +519,7 @@ p^*(y_w \succ y_l \vert{} x) = \sigma \left( \beta \log \frac{\pi^*(y_w\vert{}x)
 这是一对样本的概率, 我们做极大似然估计(最小化负对数似然), 得到了最终的 Loss:
 
 ```math
-\begin{gathered}
-\mathcal{L}_{\text{DPO}}(\pi_\theta; \pi_{\text{ref}})\\[4pt]
-= -\mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}} \left[ \log \sigma \left( \beta \log \frac{\pi_\theta(y_w\vert{}x)}{\pi_{\text{ref}}(y_w\vert{}x)} - \beta \log \frac{\pi_\theta(y_l\vert{}x)}{\pi_{\text{ref}}(y_l\vert{}x)} \right) \right]
-\end{gathered}
+\mathcal{L}_{\text{DPO}}(\pi_\theta; \pi_{\text{ref}}) = -\mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}} \left[ \log \sigma \left( \beta \log \frac{\pi_\theta(y_w\vert{}x)}{\pi_{\text{ref}}(y_w\vert{}x)} - \beta \log \frac{\pi_\theta(y_l\vert{}x)}{\pi_{\text{ref}}(y_l\vert{}x)} \right) \right]
 ```
 
 可以定义一个隐式奖励 $`\hat{r}_\theta(x, y) = \beta \log \frac{\pi_\theta(y\vert{}x)}{\pi_{\text{ref}}(y\vert{}x)}`$, 这意味着**语言模型本身就是一个天然的奖励模型**

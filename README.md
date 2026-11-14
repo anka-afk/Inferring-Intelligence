@@ -13,6 +13,7 @@
 | 编号 | 手稿                                                      | 主题                        | 课程 |
 | ---- | --------------------------------------------------------- | --------------------------- | ---- |
 | 01   | [DPO：从偏好数据到策略优化](manuscripts/01-dpo/README.md) | 偏好学习、KL 正则、最大似然 |      |
+| 02   | [Training Language Models to Self-Correct via Reinforcement Learning](manuscripts/02-score/README.md) | 自我纠错、两阶段强化学习、奖励塑形 |      |
 
 ## 许可与转载
 

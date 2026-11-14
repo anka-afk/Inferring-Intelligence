@@ -378,7 +378,8 @@ Z(x)
 构造一下(同除一个):
 
 ```math
-\begin{aligned} &\min_{\pi_\theta} \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_\theta(y\vert{}x)} \left[ \log \frac{\pi_\theta(y\vert{}x)}{\frac{1}{Z(x)} \pi_{\text{ref}}(y\vert{}x) \exp\left(\frac{1}{\beta} r(x, y)\right)} - \log Z(x) \right] \\ =& \min_{\pi_\theta} \mathbb{E}_{x \sim \mathcal{D}} \left[ \mathbb{D}_{\text{KL}}\left( \pi_\theta(y\vert{}x) \,\middle\Vert{}\, \frac{1}{Z(x)} \pi_{\text{ref}}(y\vert{}x) \exp\left(\frac{1}{\beta} r(x, y)\right) \right) - \log Z(x) \right] \end{aligned}
+\begin{aligned} &\min_{\pi_\theta} \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_\theta(y\vert{}x)} \left[ \log \frac{\pi_\theta(y\vert{}x)}{\frac{1}{Z(x)} \pi_{\text{ref}}(y\vert{}x) \exp\left(\frac{1}{\beta} r(x, y)\right)} - \log Z(x) \right] \\
+&= \min_{\pi_\theta} \mathbb{E}_{x \sim \mathcal{D}} \left[ \mathbb{D}_{\text{KL}}\left( \pi_\theta(y\vert{}x) \,\middle\Vert{}\, \frac{1}{Z(x)} \pi_{\text{ref}}(y\vert{}x) \exp\left(\frac{1}{\beta} r(x, y)\right) \right) - \log Z(x) \right] \end{aligned}
 ```
 
 注意到归一化函数:
@@ -518,12 +519,10 @@ p^*(y_w \succ y_l \vert{} x) = \sigma \left( \beta \log \frac{\pi^*(y_w\vert{}x)
 这是一对样本的概率, 我们做极大似然估计(最小化负对数似然), 得到了最终的 Loss:
 
 ```math
-\begin{aligned}
-\mathcal{L}_{\text{DPO}}(\pi_\theta; \pi_{\text{ref}}) &= -\mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}} \Biggl[ \\
-&\quad \log \sigma \Biggl( \\
-&\qquad \beta \log \frac{\pi_\theta(y_w\vert{}x)}{\pi_{\text{ref}}(y_w\vert{}x)} \\
-&\qquad - \beta \log \frac{\pi_\theta(y_l\vert{}x)}{\pi_{\text{ref}}(y_l\vert{}x)} \Biggr) \Biggr]
-\end{aligned}
+\begin{gathered}
+\mathcal{L}_{\text{DPO}}(\pi_\theta; \pi_{\text{ref}})\\[4pt]
+= -\mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}} \left[ \log \sigma \left( \beta \log \frac{\pi_\theta(y_w\vert{}x)}{\pi_{\text{ref}}(y_w\vert{}x)} - \beta \log \frac{\pi_\theta(y_l\vert{}x)}{\pi_{\text{ref}}(y_l\vert{}x)} \right) \right]
+\end{gathered}
 ```
 
 可以定义一个隐式奖励 $`\hat{r}_\theta(x, y) = \beta \log \frac{\pi_\theta(y\vert{}x)}{\pi_{\text{ref}}(y\vert{}x)}`$, 这意味着**语言模型本身就是一个天然的奖励模型**
@@ -644,11 +643,10 @@ z_\theta
 写完整一点:
 
 ```math
-\begin{aligned}
-\nabla_\theta \mathcal{L}_{\text{DPO}}(\pi_\theta; \pi_{\text{ref}}) &= -\beta \mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}} \Biggl[ \\
-&\quad \underbrace{\sigma\big(\hat{r}_\theta(x, y_l) - \hat{r}_\theta(x, y_w)\big)}_{\text{自适应权重（打分错误程度）}} \\
-&\quad \left( \underbrace{\nabla_\theta \log \pi_\theta(y_w\vert{}x)}_{\text{提高好回答概率}} - \underbrace{\nabla_\theta \log \pi_\theta(y_l\vert{}x)}_{\text{降低坏回答概率}} \right) \Biggr]
-\end{aligned}
+\begin{gathered}
+\nabla_\theta \mathcal{L}_{\text{DPO}}(\pi_\theta; \pi_{\text{ref}})\\[4pt]
+= -\beta \mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}} \left[ \underbrace{\sigma\big(\hat{r}_\theta(x, y_l) - \hat{r}_\theta(x, y_w)\big)}_{\text{自适应权重（打分错误程度）}} \left( \underbrace{\nabla_\theta \log \pi_\theta(y_w\vert{}x)}_{\text{提高好回答概率}} - \underbrace{\nabla_\theta \log \pi_\theta(y_l\vert{}x)}_{\text{降低坏回答概率}} \right) \right]
+\end{gathered}
 ```
 
 $`z_\theta\ll 0`$ 时说明判断错了, 权重接近 $`1`$, 需要大步更新, 反之权重接近 $`0`$
@@ -666,8 +664,3 @@ $`z_\theta\ll 0`$ 时说明判断错了, 权重接近 $`1`$, 需要大步更新,
 因此，这套推导建立了奖励学习与策略参数化之间的对应关系，
 
 **并不保证有限数据上的 DPO 一定恢复真实人类奖励对应的最优策略，也不保证它与实际 PPO 训练得到同一模型**
-
-## 相关笔记
-
-- di-9-jie-ai-ye-yao-jiang-ji-ben-fa
-- di-8-jie-zuo-yi-ge-ting-hua-de-ai

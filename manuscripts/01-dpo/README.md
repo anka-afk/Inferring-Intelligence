@@ -358,14 +358,14 @@ p_\theta(y_w\succ y_l\mid x)
 
 ```math
 \pi_\theta(y\mid x)
-=\prod_{k=1}^{T}\pi_\theta(t_k\mid x,t_{<k}),
+=\prod_{k=1}^{T}\pi_\theta(t_k\mid x,t_{\lt k}),
 ```
 
 因此：
 
 ```math
 \log\pi_\theta(y\mid x)
-=\sum_{k=1}^{T}\log\pi_\theta(t_k\mid x,t_{<k}).
+=\sum_{k=1}^{T}\log\pi_\theta(t_k\mid x,t_{\lt k}).
 ```
 
 对一个偏好对，训练需要四个序列对数概率：当前策略的正例与负例，以及参考策略的正例与负例。

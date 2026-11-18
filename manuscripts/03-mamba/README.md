@@ -395,83 +395,83 @@ h_t = \overline{A}_t h_{t-1} + \overline{B}_t x_t
 
 作为 FlashAttention 的作者，Tri Dao 在这里用了三招:
 
-1. 并行扫描 **Parallel Associative Scan**
+#### 并行扫描 Parallel Associative Scan
 
-   我们先来看前缀和问题, 做个铺垫, 对数组 $`[3, 1, 4, 2]`$, 求前缀和 $`[3, 4, 8, 10]`$, 我们有两个办法:
+我们先来看前缀和问题, 做个铺垫, 对数组 $`[3, 1, 4, 2]`$, 求前缀和 $`[3, 4, 8, 10]`$, 我们有两个办法:
 
-   串行算法: 3 -> 3+1=4 -> 4+4=8 -> 8+2=10(计算 3 步)
+串行算法: 3 -> 3+1=4 -> 4+4=8 -> 8+2=10(计算 3 步)
 
-   并行算法, 树状两两合并
+并行算法, 树状两两合并
 
-   首先左边算 3+1=4, 右边同时算 4+2=6
+首先左边算 3+1=4, 右边同时算 4+2=6
 
-   把左边的总和 4 直接加到右边的 4 和 6 上, 直接得到最终答案(只用了两步, 准确来说是 $`Log_2(L)`$)
+把左边的总和 4 直接加到右边的 4 和 6 上, 直接得到最终答案(只用了两步, 准确来说是 $`Log_2(L)`$)
 
-   这就是并行前缀和（Blelloch Scan 算法）, 它的时间复杂度为 $`O(\log L)`$
+这就是并行前缀和（Blelloch Scan 算法）, 它的时间复杂度为 $`O(\log L)`$
 
-   ![并行前缀和的 Upsweep 与 Downsweep 过程](assets/prefix-sum-scan.png)
+![并行前缀和的 Upsweep 与 Downsweep 过程](assets/prefix-sum-scan.png)
 
-   另一个例子:
+另一个例子:
 
-   ![Blelloch 并行扫描算法](assets/blelloch-scan.png)
+![Blelloch 并行扫描算法](assets/blelloch-scan.png)
 
-   其中 DownSweep 过程是从根节点开始把每个节点视为前缀和, 根节点是把整个数组视为一个数, 前面没有数是 $`0`$
+其中 DownSweep 过程是从根节点开始把每个节点视为前缀和, 根节点是把整个数组视为一个数, 前面没有数是 $`0`$
 
-   我们的公式 $`h_t = \overline{A}_t h_{t-1} + \overline{B}_t x_t`$ 虽然多了个乘法 $`\overline{A}_t`$, 但是它和加法是一样的满足**结合律**
+我们的公式 $`h_t = \overline{A}_t h_{t-1} + \overline{B}_t x_t`$ 虽然多了个乘法 $`\overline{A}_t`$, 但是它和加法是一样的满足**结合律**
 
-   我们考虑一个仿射变换算子 $`e_t = (a_t, b_t)`$, 令 $`a_t = \overline{A}_t`$, $`b_t = \overline{B}_t x_t`$
+我们考虑一个仿射变换算子 $`e_t = (a_t, b_t)`$, 令 $`a_t = \overline{A}_t`$, $`b_t = \overline{B}_t x_t`$
 
-   我们推两步:
+我们推两步:
 
-   ```math
-   h_1 = a_1 h_0 + b_1
-   ```
+```math
+h_1 = a_1 h_0 + b_1
+```
 
-   ```math
-   h_2 = a_2 h_1 + b_2 = a_2(a_1 h_0 + b_1) + b_2 = \underbrace{(a_2 a_1)}_{\text{新 } a} h_0 + \underbrace{(a_2 b_1 + b_2)}_{\text{新 } b}
-   ```
+```math
+h_2 = a_2 h_1 + b_2 = a_2(a_1 h_0 + b_1) + b_2 = \underbrace{(a_2 a_1)}_{\text{新 } a} h_0 + \underbrace{(a_2 b_1 + b_2)}_{\text{新 } b}
+```
 
-   我们直觉发现 $`e_{1\to 2} = (a_2 a_1, \; a_2 b_1 + b_2)`$, 外推一下到任意步:
+我们直觉发现 $`e_{1\to 2} = (a_2 a_1, \; a_2 b_1 + b_2)`$, 外推一下到任意步:
 
-   ```math
-   (a_2, b_2) \bullet (a_1, b_1) = (a_2 \odot a_1, \; a_2 \odot b_1 + b_2)
-   ```
+```math
+(a_2, b_2) \bullet (a_1, b_1) = (a_2 \odot a_1, \; a_2 \odot b_1 + b_2)
+```
 
-   (这里是因为矩阵 $`A`$ 被设计成了对角阵所以矩阵乘法可以用 $`\odot`$ 表示)
+(这里是因为矩阵 $`A`$ 被设计成了对角阵所以矩阵乘法可以用 $`\odot`$ 表示)
 
-   对应到 $`e_2 \bullet e_1`$:
+对应到 $`e_2 \bullet e_1`$:
 
-   ```math
-   h_2 = \overline{A}_2 (\overline{A}_1 h_0 + \overline{B}_1 x_1) + \overline{B}_2 x_2 = (\overline{A}_2 \odot \overline{A}_1) h_0 + (\overline{A}_2 \odot \overline{B}_1 x_1 + \overline{B}_2 x_2)
-   ```
+```math
+h_2 = \overline{A}_2 (\overline{A}_1 h_0 + \overline{B}_1 x_1) + \overline{B}_2 x_2 = (\overline{A}_2 \odot \overline{A}_1) h_0 + (\overline{A}_2 \odot \overline{B}_1 x_1 + \overline{B}_2 x_2)
+```
 
-   并且容易看出 $`(e_3 \bullet e_2) \bullet e_1 = e_3 \bullet (e_2 \bullet e_1)`$ 满足结合律
+并且容易看出 $`(e_3 \bullet e_2) \bullet e_1 = e_3 \bullet (e_2 \bullet e_1)`$ 满足结合律
 
-   GPU 可以开启成千上万个线程，分两个阶段（Up-Sweep 归约 + Down-Sweep 分发）并行合并相邻二元组, 以 $`L=8`$ 为例:
+GPU 可以开启成千上万个线程，分两个阶段（Up-Sweep 归约 + Down-Sweep 分发）并行合并相邻二元组, 以 $`L=8`$ 为例:
 
-   1. 同时计算 $`(e_1 \bullet e_0), (e_3 \bullet e_2), (e_5 \bullet e_4), (e_7 \bullet e_6)`$
-   2. 两两计算 $`e_{3:0}, e_{7:4}`$
-   3. 再跨步合并, 直接一次算出 $`h_0, h_1, \dots, h_7`$
+1. 同时计算 $`(e_1 \bullet e_0), (e_3 \bullet e_2), (e_5 \bullet e_4), (e_7 \bullet e_6)`$
+2. 两两计算 $`e_{3:0}, e_{7:4}`$
+3. 再跨步合并, 直接一次算出 $`h_0, h_1, \dots, h_7`$
 
-   ![Mamba 并行关联扫描算法](assets/associative-scan.png)
+![Mamba 并行关联扫描算法](assets/associative-scan.png)
 
-   以上就是并行扫描算法
+以上就是并行扫描算法
 
-2. 算子融合 **Kernel Fusion**
+#### 算子融合 Kernel Fusion
 
-   目的是减少显存读写, 目前计算瓶颈来自于 HBM 和 SRAM 的 rollin rollout
+目的是减少显存读写, 目前计算瓶颈来自于 HBM 和 SRAM 的 rollin rollout
 
-   如果不优化的话, 需要先从 HBM 搬出 $`\Delta, A, B`$ ($`L \times D`$)在 SRAM 算出 $`\overline{A}, \overline{B}`$ ($`L \times D \times 16`$, 假设隐状态 $`N=16`$), 再搬回 HBM 存起来, 第二趟再把 $`\overline{A}, \overline{B}`$ 搬入 SRAM, 做完并行扫描算出隐状态 $`h`$ ($`L \times D \times 16`$), 再保存到 HBM, 第三趟再把 $`h`$ 和 $`C`$ 搬入 SRAM 相乘得到 $`y`$($`L \times D`$), 最后存回 HBM, 主要时间都浪费在搬运乘上隐状态大小的参数块上了, 那我们进行算子融合, 让放大后的参数不进进出出
+如果不优化的话, 需要先从 HBM 搬出 $`\Delta, A, B`$ ($`L \times D`$)在 SRAM 算出 $`\overline{A}, \overline{B}`$ ($`L \times D \times 16`$, 假设隐状态 $`N=16`$), 再搬回 HBM 存起来, 第二趟再把 $`\overline{A}, \overline{B}`$ 搬入 SRAM, 做完并行扫描算出隐状态 $`h`$ ($`L \times D \times 16`$), 再保存到 HBM, 第三趟再把 $`h`$ 和 $`C`$ 搬入 SRAM 相乘得到 $`y`$($`L \times D`$), 最后存回 HBM, 主要时间都浪费在搬运乘上隐状态大小的参数块上了, 那我们进行算子融合, 让放大后的参数不进进出出
 
-   Tri Dao 用底层 CUDA C++ 写了一个**融合算子**
+Tri Dao 用底层 CUDA C++ 写了一个**融合算子**
 
-   只把 $`(\Delta, A, B, C, x)`$ 一次读入 SRAM ($`O(BLD + DN)`$), 在 SRAM 算出 $`\overline{A}, \overline{B}`$, 紧接着直接做并行扫描算出 $`h`$, 再直接 $`h`$ 和 $`C`$ 相乘得到 $`y`$, 膨胀了 $`16`$ 倍的 $`h`$ 全程不出 SRAM, 最后把 $`y`$ 成品写回 HBM
+只把 $`(\Delta, A, B, C, x)`$ 一次读入 SRAM ($`O(BLD + DN)`$), 在 SRAM 算出 $`\overline{A}, \overline{B}`$, 紧接着直接做并行扫描算出 $`h`$, 再直接 $`h`$ 和 $`C`$ 相乘得到 $`y`$, 膨胀了 $`16`$ 倍的 $`h`$ 全程不出 SRAM, 最后把 $`y`$ 成品写回 HBM
 
-   如果序列 $`L`$ 很长, SRAM 一次放不完就分块
+如果序列 $`L`$ 很长, SRAM 一次放不完就分块
 
-3. 重计算 **Recomputation**
+#### 重计算 Recomputation
 
-   反向传播需要用到前向传播的中间状态 $`h`$ ($`\overline{A}_t h_{t-1}`$ 求梯度有个 $`h`$), 为了省显存, 前向传播的时候不保持这些, 在反向传播的时候重新算一遍, 省了很多显存(以算代存, 因为计算过剩)
+反向传播需要用到前向传播的中间状态 $`h`$ ($`\overline{A}_t h_{t-1}`$ 求梯度有个 $`h`$), 为了省显存, 前向传播的时候不保持这些, 在反向传播的时候重新算一遍, 省了很多显存(以算代存, 因为计算过剩)
 
 最后在 GPU 上比 FlashAttention-2 还快
 

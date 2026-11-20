@@ -15,6 +15,7 @@
 | 01   | [DPO：从偏好数据到策略优化](manuscripts/01-dpo/README.md) | 偏好学习、KL 正则、最大似然 |      |
 | 02   | [Training Language Models to Self-Correct via Reinforcement Learning](manuscripts/02-score/README.md) | 自我纠错、两阶段强化学习、奖励塑形 |      |
 | 03   | [Mamba: Linear-Time Sequence Modeling with Selective State Spaces](manuscripts/03-mamba/README.md) | 选择性状态空间、并行扫描、硬件感知算法 |      |
+| 04   | [Trial and Error: Exploration-Based Trajectory Optimization for LLM Agents](manuscripts/04-eto/README.md) | 探索式轨迹优化、失败轨迹对比、迭代 DPO |      |
 
 ## 许可与转载
 

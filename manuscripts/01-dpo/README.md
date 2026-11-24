@@ -1,5 +1,11 @@
 # DPO
 
+原文：[[2305.18290] Direct Preference Optimization: Your Language Model is Secretly a Reward Model](https://arxiv.org/abs/2305.18290)
+
+代码：https://github.com/eric-mitchell/direct-preference-optimization
+
+发表：**NeurIPS 2023 Oral**
+
 > **既然观测到的是偏好，而最终想学的是策略，
 > 能不能直接写出「这个策略预测人会怎么选」的概率？**
 
